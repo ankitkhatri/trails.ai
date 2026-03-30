@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import * as PrismaClientPackage from "@prisma/client";
 import type { PlanDay, SavedRoute, TrekPlan } from "@prisma/client";
 import type {
   DayScenerySummary,
@@ -16,18 +16,18 @@ type PlanRecord = TrekPlan & {
   days: PlanDay[];
 };
 
-function asJson<T>(value: Prisma.JsonValue | null | undefined, fallback: T): T {
+const prismaJsonNull = (PrismaClientPackage as Record<string, unknown>).JsonNull as never;
+
+function asJson<T>(value: unknown, fallback: T): T {
   return (value as T | null | undefined) ?? fallback;
 }
 
-export function toInputJsonValue(value: Prisma.JsonValue) {
-  return value as Prisma.InputJsonValue;
+export function toInputJsonValue<T>(value: T) {
+  return value as unknown as never;
 }
 
-export function toNullableInputJsonValue(value: Prisma.JsonValue | null | undefined) {
-  return value === null || value === undefined
-    ? Prisma.JsonNull
-    : (value as Prisma.InputJsonValue);
+export function toNullableInputJsonValue<T>(value: T | null | undefined) {
+  return value === null || value === undefined ? prismaJsonNull : (value as unknown as never);
 }
 
 export function serializeSceneryRecord(
@@ -43,12 +43,10 @@ export function buildPlanWriteInput(input: SavePlanRequest) {
     title: input.title.trim() || input.route?.name || "Untitled trek plan",
     planningMode: input.planningMode,
     weatherProvider: input.weatherProvider,
-    assumptions: input.assumptions as Prisma.InputJsonValue,
-    trekContext: input.trekContext as Prisma.InputJsonValue,
-    analysisSnapshot: input.analysis
-      ? (input.analysis as Prisma.InputJsonValue)
-      : Prisma.JsonNull,
-    scenerySnapshot: (input.dayScenery ?? []) as Prisma.InputJsonValue,
+    assumptions: toInputJsonValue(input.assumptions),
+    trekContext: toInputJsonValue(input.trekContext),
+    analysisSnapshot: toNullableInputJsonValue(input.analysis),
+    scenerySnapshot: toInputJsonValue(input.dayScenery ?? []),
     snapshotVersion: 1,
   };
 }
@@ -62,10 +60,10 @@ export function buildRouteWriteInput(input: SavePlanRequest) {
     sourceFileName: input.uploadedFileName || null,
     routeName: input.route.name,
     totalDistanceKm: input.route.totalDistanceKm,
-    rawPoints: input.route.rawPoints as Prisma.InputJsonValue,
-    sampledPoints: input.route.sampledPoints as Prisma.InputJsonValue,
-    bounds: input.route.bounds as Prisma.InputJsonValue,
-    warnings: input.route.warnings as Prisma.InputJsonValue,
+    rawPoints: toInputJsonValue(input.route.rawPoints),
+    sampledPoints: toInputJsonValue(input.route.sampledPoints),
+    bounds: toInputJsonValue(input.route.bounds),
+    warnings: toInputJsonValue(input.route.warnings),
   };
 }
 
@@ -75,9 +73,9 @@ export function buildDayWriteInput(dayPlans: TrekDayPlan[]) {
     label: dayPlan.label,
     startDateTimeIso: new Date(dayPlan.startDateTimeIso),
     movingHours: dayPlan.movingHours,
-    startAnchor: dayPlan.startAnchor as Prisma.InputJsonValue,
-    endAnchor: dayPlan.endAnchor as Prisma.InputJsonValue,
-    sidePoint: (dayPlan.sidePoint ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+    startAnchor: toInputJsonValue(dayPlan.startAnchor),
+    endAnchor: toInputJsonValue(dayPlan.endAnchor),
+    sidePoint: toNullableInputJsonValue(dayPlan.sidePoint),
   }));
 }
 
