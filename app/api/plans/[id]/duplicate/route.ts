@@ -40,9 +40,12 @@ export async function POST(_: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Plan not found." }, { status: 404 });
   }
 
-  const sourceDayPlans = sourcePlan.days
-    .sort((left, right) => left.dayNumber - right.dayNumber)
-    .map((day) => ({
+  const sortedDays = [...sourcePlan.days].sort(
+    (left: (typeof sourcePlan.days)[number], right: (typeof sourcePlan.days)[number]) =>
+      left.dayNumber - right.dayNumber
+  );
+
+  const sourceDayPlans = sortedDays.map((day) => ({
       id: day.id,
     }));
   const sourceAnalysis = (sourcePlan.analysisSnapshot ?? null) as RouteAnalysisResponse | null;
@@ -81,17 +84,15 @@ export async function POST(_: Request, { params }: RouteContext) {
         },
       },
       days: {
-        create: sourcePlan.days
-          .sort((left, right) => left.dayNumber - right.dayNumber)
-          .map((day) => ({
-            dayNumber: day.dayNumber,
-            label: day.label,
-            startDateTimeIso: day.startDateTimeIso,
-            movingHours: day.movingHours,
-            startAnchor: toInputJsonValue(day.startAnchor),
-            endAnchor: toInputJsonValue(day.endAnchor),
-            sidePoint: toNullableInputJsonValue(day.sidePoint),
-          })),
+        create: sortedDays.map((day) => ({
+          dayNumber: day.dayNumber,
+          label: day.label,
+          startDateTimeIso: day.startDateTimeIso,
+          movingHours: day.movingHours,
+          startAnchor: toInputJsonValue(day.startAnchor),
+          endAnchor: toInputJsonValue(day.endAnchor),
+          sidePoint: toNullableInputJsonValue(day.sidePoint),
+        })),
       },
     },
     include: planInclude,
