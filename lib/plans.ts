@@ -1,5 +1,4 @@
 import * as PrismaClientPackage from "@prisma/client";
-import type { PlanDay, SavedRoute, TrekPlan } from "@prisma/client";
 import type {
   DayScenerySummary,
   PlanOwnerMode,
@@ -11,11 +10,46 @@ import type {
   TrekDayPlan,
 } from "@/lib/types";
 
-type PlanRecord = TrekPlan & {
-  route: SavedRoute;
-  days: PlanDay[];
+type PersistedRouteRecord = {
+  sourceFileName: string | null;
+  routeName: string;
+  totalDistanceKm: number;
+  rawPoints: unknown;
+  sampledPoints: unknown;
+  bounds: unknown;
+  warnings: unknown;
 };
 
+type PersistedDayRecord = {
+  id: string;
+  dayNumber: number;
+  label: string;
+  startDateTimeIso: Date;
+  movingHours: number;
+  startAnchor: unknown;
+  endAnchor: unknown;
+  sidePoint: unknown;
+};
+
+type PersistedPlanBase = {
+  id: string;
+  title: string;
+  planningMode: string;
+  weatherProvider: string;
+  trekContext: unknown;
+  assumptions: unknown;
+  analysisSnapshot: unknown;
+  scenerySnapshot: unknown;
+  snapshotVersion: number;
+  shareToken: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type PlanRecord = PersistedPlanBase & {
+  route: PersistedRouteRecord;
+  days: PersistedDayRecord[];
+};
 const prismaJsonNull = (PrismaClientPackage as Record<string, unknown>).JsonNull as never;
 
 function asJson<T>(value: unknown, fallback: T): T {
@@ -173,7 +207,7 @@ export function buildSavedPlanSummary(plan: PlanRecord): SavedPlanSummary {
 
 export function remapPlanSnapshotDayIds(
   sourceDayPlans: Pick<TrekDayPlan, "id">[],
-  persistedDays: Pick<PlanDay, "id" | "dayNumber">[],
+  persistedDays: Pick<PersistedDayRecord, "id" | "dayNumber">[],
   analysis: RouteAnalysisResponse | null,
   dayScenery: DayScenerySummary[]
 ) {
