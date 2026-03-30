@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
+import Captions from "yet-another-react-lightbox/plugins/captions";
 import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import "yet-another-react-lightbox/styles.css";
+import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import { getAnchorDisplayLabel } from "@/lib/itinerary";
 import type {
@@ -84,6 +86,7 @@ export function MapDayDock({
   onApplyDayTemplate,
 }: MapDayDockProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const lightboxBackdrop = "rgba(6, 10, 18, 0.9)";
   const selectedDayPlan =
     dayPlans.find((dayPlan) => dayPlan.id === selectedDayPlanId) ?? dayPlans[0] ?? null;
   const selectedDaySummary =
@@ -701,28 +704,52 @@ export function MapDayDock({
         open={lightboxIndex !== null}
         close={() => setLightboxIndex(null)}
         index={lightboxIndex ?? 0}
-        plugins={[Thumbnails]}
+        plugins={[Captions, Thumbnails]}
         slides={lightboxPhotos.map((photo) => ({
           src: photo.regularUrl,
           alt: photo.alt,
           thumbnail: photo.thumbUrl,
+          title: selectedScenery?.representativeLabel ?? photo.alt,
+          description: (
+            <span>
+              {photo.alt}
+              {" · "}
+              <a
+                href={photo.unsplashUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                Photo by {photo.photographerName} on Unsplash
+              </a>
+            </span>
+          ),
         }))}
         carousel={{ finite: false }}
         controller={{ closeOnBackdropClick: true }}
+        captions={{
+          hidden: false,
+          showToggle: false,
+          descriptionTextAlign: "center",
+          descriptionMaxLines: 3,
+        }}
         thumbnails={{
           position: "bottom",
-          width: 104,
-          height: 72,
-          border: 0,
-          borderRadius: 14,
-          padding: 0,
-          gap: 10,
+          width: 120,
+          height: 80,
+          border: 2,
+          borderColor: "rgba(255,255,255,0.28)",
+          borderRadius: 16,
+          padding: 2,
+          gap: 12,
+          hidden: false,
+          imageFit: "cover",
           vignette: false,
           showToggle: false,
         }}
         render={{
           slide: ({ slide }) => (
-            <div className="flex h-full w-full items-center justify-center bg-black">
+            <div className="flex h-full w-full items-center justify-center">
               <img
                 src={slide.src}
                 alt={slide.alt ?? ""}
@@ -746,17 +773,19 @@ export function MapDayDock({
         }}
         styles={{
           container: {
-            backgroundColor: "rgba(6, 10, 18, 0.9)",
+            backgroundColor: lightboxBackdrop,
           },
           thumbnailsTrack: {
-            background: "transparent",
-            padding: "0 1rem 1rem",
+            background: lightboxBackdrop,
+            padding: "1rem 1.25rem 1.25rem",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
           },
           thumbnailsContainer: {
-            background: "transparent",
+            background: lightboxBackdrop,
           },
           thumbnail: {
             background: "rgba(255,255,255,0.06)",
+            boxShadow: "0 12px 30px rgba(0,0,0,0.28)",
           },
         }}
       />
