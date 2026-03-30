@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime?
+  image          String?
+  hashedPassword String?
+  accounts       Account[]
+  sessions       Session[]
+  plans          TrekPlan[]
+  routes         SavedRoute[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model SavedRoute {
+  id              String   @id @default(cuid())
+  ownerId         String
+  owner           User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  sourceFileName  String?
+  gpxText         String?  @db.Text
+  routeName       String
+  totalDistanceKm Float
+  rawPoints       Json
+  sampledPoints   Json
+  bounds          Json
+  warnings        Json
+  plans           TrekPlan[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model TrekPlan {
+  id               String    @id @default(cuid())
+  ownerId          String
+  owner            User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  routeId          String
+  route            SavedRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  title            String
+  planningMode     String
+  weatherProvider  String
+  trekContext      Json
+  assumptions      Json
+  analysisSnapshot Json?
+  scenerySnapshot  Json?
+  snapshotVersion  Int       @default(1)
+  shareToken       String    @unique @default(cuid())
+  days             PlanDay[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model PlanDay {
+  id               String    @id @default(cuid())
+  planId           String
+  plan             TrekPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  dayNumber        Int
+  label            String
+  startDateTimeIso DateTime
+  movingHours      Float
+  startAnchor      Json
+  endAnchor        Json
+  sidePoint        Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([planId, dayNumber])
+}
