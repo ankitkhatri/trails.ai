@@ -11,22 +11,35 @@ function anchorElevation(anchor: TrekAnchor) {
   return anchor.kind === "custom" ? anchor.elevationM ?? 0 : 0;
 }
 
-function getTerrainTag(daySummary: RouteAnalysisDaySummary) {
-  const maxElevation = Math.max(
+function getFallbackMaxElevation(daySummary: RouteAnalysisDaySummary) {
+  return Math.max(
     anchorElevation(daySummary.startAnchor),
     anchorElevation(daySummary.endAnchor),
     daySummary.sidePointForecast?.elevationM ?? 0
   );
+}
 
-  if (maxElevation >= 3800) {
+function getEffectiveMaxElevation(daySummary: RouteAnalysisDaySummary) {
+  return daySummary.routeMaxElevationM ?? getFallbackMaxElevation(daySummary);
+}
+
+function getEffectiveAverageElevation(daySummary: RouteAnalysisDaySummary) {
+  return daySummary.routeAverageElevationM ?? getEffectiveMaxElevation(daySummary);
+}
+
+function getTerrainTag(daySummary: RouteAnalysisDaySummary) {
+  const maxElevation = getEffectiveMaxElevation(daySummary);
+  const averageElevation = getEffectiveAverageElevation(daySummary);
+
+  if (maxElevation >= 3800 || averageElevation >= 3400) {
     return "alpine ridge";
   }
 
-  if (maxElevation >= 2600) {
+  if (maxElevation >= 2600 || averageElevation >= 2200) {
     return "high mountain trail";
   }
 
-  if (maxElevation >= 1600) {
+  if (maxElevation >= 1600 || averageElevation >= 1400) {
     return "mountain village trail";
   }
 
@@ -34,11 +47,7 @@ function getTerrainTag(daySummary: RouteAnalysisDaySummary) {
 }
 
 function getElevationBand(daySummary: RouteAnalysisDaySummary): "low" | "mid" | "high" {
-  const maxElevation = Math.max(
-    anchorElevation(daySummary.startAnchor),
-    anchorElevation(daySummary.endAnchor),
-    daySummary.sidePointForecast?.elevationM ?? 0
-  );
+  const maxElevation = getEffectiveMaxElevation(daySummary);
 
   if (maxElevation >= 3500) {
     return "high";
@@ -119,6 +128,9 @@ export function buildSceneryQueryInput(
     country: trekContext.country,
     season: trekContext.season,
     routeDistanceKm: daySummary.distanceKm,
+    routeMinElevationM: daySummary.routeMinElevationM,
+    routeMaxElevationM: daySummary.routeMaxElevationM,
+    routeAverageElevationM: daySummary.routeAverageElevationM,
     elevationBand: getElevationBand(daySummary),
     terrainTag,
     weatherMood,
