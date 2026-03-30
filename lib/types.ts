@@ -151,6 +151,9 @@ export type SceneryQueryInput = {
   country: string;
   season: string;
   routeDistanceKm: number;
+  routeMinElevationM: number | null;
+  routeMaxElevationM: number | null;
+  routeAverageElevationM: number | null;
   elevationBand: "low" | "mid" | "high";
   terrainTag: string;
   weatherMood: string;
@@ -215,6 +218,9 @@ export type RouteAnalysisDaySummary = {
   endTimeIso: string;
   distanceKm: number;
   waypointCount: number;
+  routeMinElevationM: number | null;
+  routeMaxElevationM: number | null;
+  routeAverageElevationM: number | null;
   maxRiskLevel: RiskLevel;
   maxWindSpeedKph: number;
   maxPrecipitationMm: number;

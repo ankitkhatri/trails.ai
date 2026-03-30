@@ -88,6 +88,28 @@ function buildLocationForecastSummary(
   };
 }
 
+function summarizeRouteElevations(routeWaypoints: AnalyzedWaypoint[]) {
+  const elevations = routeWaypoints
+    .map((waypoint) => waypoint.elevationM)
+    .filter((elevation): elevation is number => typeof elevation === "number");
+
+  if (elevations.length === 0) {
+    return {
+      routeMinElevationM: null,
+      routeMaxElevationM: null,
+      routeAverageElevationM: null,
+    };
+  }
+
+  const totalElevation = elevations.reduce((sum, elevation) => sum + elevation, 0);
+
+  return {
+    routeMinElevationM: Math.min(...elevations),
+    routeMaxElevationM: Math.max(...elevations),
+    routeAverageElevationM: totalElevation / elevations.length,
+  };
+}
+
 function summarizeDay(day: DayComputation, sampledPoints: RoutePoint[], dayNumber: number) {
   const riskSources = [
     ...day.routeWaypoints.map((waypoint) => waypoint.risk),
@@ -103,6 +125,7 @@ function summarizeDay(day: DayComputation, sampledPoints: RoutePoint[], dayNumbe
   ];
   const startLabel = getAnchorDisplayLabel(day.plan.startAnchor, sampledPoints);
   const endLabel = getAnchorDisplayLabel(day.plan.endAnchor, sampledPoints);
+  const routeElevationSummary = summarizeRouteElevations(day.routeWaypoints);
 
   return {
     dayNumber,
@@ -118,6 +141,9 @@ function summarizeDay(day: DayComputation, sampledPoints: RoutePoint[], dayNumbe
     endTimeIso: day.endTimeIso,
     distanceKm: day.routeDistanceKm,
     waypointCount: day.routeWaypoints.length,
+    routeMinElevationM: routeElevationSummary.routeMinElevationM,
+    routeMaxElevationM: routeElevationSummary.routeMaxElevationM,
+    routeAverageElevationM: routeElevationSummary.routeAverageElevationM,
     maxRiskLevel: maxRiskLevelFromBreakdowns(riskSources),
     maxWindSpeedKph: Math.max(...weatherSources.map((weather) => weather.windSpeedKph)),
     maxPrecipitationMm: Math.max(...weatherSources.map((weather) => weather.precipitationMm)),
