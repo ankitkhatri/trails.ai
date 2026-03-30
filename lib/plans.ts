@@ -98,8 +98,11 @@ export function buildSavedPlanPayload(
   };
 
   const dayPlans = [...plan.days]
-    .sort((left, right) => left.dayNumber - right.dayNumber)
-    .map<TrekDayPlan | null>((day) => {
+    .sort(
+      (left: (typeof plan.days)[number], right: (typeof plan.days)[number]) =>
+        left.dayNumber - right.dayNumber
+    )
+    .map<TrekDayPlan | null>((day: (typeof plan.days)[number]) => {
       const startAnchor = asJson<TrekDayPlan["startAnchor"] | null>(day.startAnchor, null);
       const endAnchor = asJson<TrekDayPlan["endAnchor"] | null>(day.endAnchor, null);
 
@@ -177,7 +180,8 @@ export function remapPlanSnapshotDayIds(
   dayScenery: DayScenerySummary[]
 ) {
   const sortedPersistedDays = [...persistedDays].sort(
-    (left, right) => left.dayNumber - right.dayNumber
+    (left: (typeof persistedDays)[number], right: (typeof persistedDays)[number]) =>
+      left.dayNumber - right.dayNumber
   );
   const dayIdMap = new Map<string, string>();
 

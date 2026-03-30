@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { buildSavedPlanSummary } from "@/lib/plans";
 import { prisma } from "@/lib/prisma";
 import { getAuthSession } from "@/lib/auth";
+import type { SavedPlanSummary } from "@/lib/types";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -31,7 +32,9 @@ export default async function PlansPage() {
     },
   });
 
-  const summaries = plans.map((plan) => buildSavedPlanSummary(plan));
+  const summaries: SavedPlanSummary[] = plans.map((plan: (typeof plans)[number]) =>
+    buildSavedPlanSummary(plan)
+  );
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-73px)] max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
@@ -59,7 +62,7 @@ export default async function PlansPage() {
         </section>
       ) : (
         <section className="grid gap-4 lg:grid-cols-2">
-          {summaries.map((plan) => (
+          {summaries.map((plan: SavedPlanSummary) => (
             <article key={plan.id} className="panel overflow-hidden p-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
